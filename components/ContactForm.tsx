@@ -3,12 +3,42 @@ import {
 } from "lucide-react";
 import { WhatsAppIcon } from "./WhatsAppButton";
 
-const PHONE_DISPLAY = "+90 552 291 3713";
-const PHONE_WA = "905522913713";
-const PHONE_TEL = "+905522913713";
+const DEFAULTS = {
+  phone: "+90 552 291 3713",
+  whatsapp: "905522913713",
+  email: "info@canbeyototamir.com",
+  address: "Fatih M. Akif Bulvarı No:317\nTavukçu Deresi, 34204 Bağcılar / İstanbul",
+  workingHours: "Pzt - Cuma: 08:00 - 19:00\nCumartesi: 09:00 - 17:00\nPazar: Kapalı",
+  title: "BİZE ULAŞIN",
+  subtitle: "Aracınızla ilgili randevu, fiyat teklifi veya yol yardım için WhatsApp'tan yazın veya hemen arayın.",
+};
+
 const MAPS_LINK = "https://share.google/MKRWS2R1NSvommKWm";
 
-export default function ContactForm() {
+type Props = {
+  title?: string;
+  subtitle?: string;
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
+  address?: string;
+  workingHours?: string;
+};
+
+export default function ContactForm(props: Props = {}) {
+  const title = props.title || DEFAULTS.title;
+  const subtitle = props.subtitle || DEFAULTS.subtitle;
+  const phone = props.phone || DEFAULTS.phone;
+  const whatsapp = props.whatsapp || DEFAULTS.whatsapp;
+  const email = props.email || DEFAULTS.email;
+  const address = props.address || DEFAULTS.address;
+  const workingHours = props.workingHours || DEFAULTS.workingHours;
+
+  const phoneTel = phone.startsWith("+") ? phone.replace(/\s/g, "") : `+${whatsapp}`;
+
+  const addressLines = address.split(/\n/).map((l) => l.trim()).filter(Boolean);
+  const hoursLines = workingHours.split(/\n|,/).map((l) => l.trim()).filter(Boolean);
+
   return (
     <section className="bg-white py-20 lg:py-24">
       <div className="max-w-7xl mx-auto px-6">
@@ -18,15 +48,13 @@ export default function ContactForm() {
             <span>İletişim & Randevu</span>
           </div>
           <h2 className="headline font-display text-4xl sm:text-5xl lg:text-6xl text-[#14141A] mb-4">
-            BİZE <span className="text-[#E63946]">ULAŞIN</span>
+            {title.split(" ")[0]}{" "}
+            <span className="text-[#E63946]">{title.split(" ").slice(1).join(" ")}</span>
           </h2>
-          <p className="text-[#5A5A66] max-w-2xl mx-auto mb-8">
-            Aracınızla ilgili randevu, fiyat teklifi veya yol yardım için
-            WhatsApp&apos;tan yazın veya hemen arayın.
-          </p>
+          <p className="text-[#5A5A66] max-w-2xl mx-auto mb-8">{subtitle}</p>
           <div className="flex flex-wrap justify-center gap-3">
             <a
-              href={`https://wa.me/${PHONE_WA}`}
+              href={`https://wa.me/${whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-whatsapp"
@@ -34,7 +62,7 @@ export default function ContactForm() {
               <WhatsAppIcon className="w-4 h-4" />
               WhatsApp ile Yaz
             </a>
-            <a href={`tel:${PHONE_TEL}`} className="btn btn-primary">
+            <a href={`tel:${phoneTel}`} className="btn btn-primary">
               <Phone size={14} strokeWidth={2.5} />
               Hemen Ara
             </a>
@@ -46,25 +74,25 @@ export default function ContactForm() {
           <InfoCard
             Icon={MapPin}
             title="Adres"
-            lines={["Fatih M. Akif Bulvarı No:317", "Tavukçu Deresi, 34204 Bağcılar / İstanbul"]}
+            lines={addressLines}
             link={{ href: MAPS_LINK, external: true }}
           />
           <InfoCard
             Icon={Phone}
             title="Telefon"
-            lines={[PHONE_DISPLAY, "7/24 Yol Yardım"]}
-            action={{ label: "Hemen Ara", href: `tel:${PHONE_TEL}` }}
+            lines={[phone, "7/24 Yol Yardım"]}
+            action={{ label: "Hemen Ara", href: `tel:${phoneTel}` }}
           />
           <InfoCard
             Icon={Mail}
             title="E-posta"
-            lines={["info@canbeyototamir.com"]}
-            action={{ label: "Mail Gönder", href: "mailto:info@canbeyototamir.com" }}
+            lines={[email]}
+            action={{ label: "Mail Gönder", href: `mailto:${email}` }}
           />
           <InfoCard
             Icon={Clock}
             title="Çalışma Saatleri"
-            lines={["Pzt - Cuma: 08:00 - 19:00", "Cumartesi: 09:00 - 17:00", "Pazar: Kapalı"]}
+            lines={hoursLines}
           />
         </div>
 

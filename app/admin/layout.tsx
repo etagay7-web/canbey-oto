@@ -6,12 +6,13 @@ import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import {
   LayoutDashboard, Layers, Wrench, Images, Star, Users,
-  BarChart3, Settings, MessageSquare, ExternalLink, LogOut, Menu, X, Code2,
+  BarChart3, Settings, MessageSquare, ExternalLink, LogOut, Menu, X, Code2, FileText,
 } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", Icon: LayoutDashboard, exact: true },
+  { href: "/admin/sayfalar", label: "Sayfalar", Icon: FileText },
   { href: "/admin/hero", label: "Hero Bölümü", Icon: Layers },
   { href: "/admin/hizmetler", label: "Hizmetler", Icon: Wrench },
   { href: "/admin/galeri", label: "Galeri", Icon: Images },

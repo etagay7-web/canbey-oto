@@ -4,12 +4,23 @@ import Stats from "@/components/Stats";
 import {
   Target, Lightbulb, ShieldCheck, Star, Eye, BadgeCheck,
 } from "lucide-react";
+import { loadPage, loadList } from "@/lib/pages-content";
 
 export const metadata: Metadata = {
   title: "Hakkımızda - 1998'den Beri Güvenin Adresi",
   description:
     "Canbey Oto Tamir 1998 yılından bu yana İstanbul'da oto tamir, bakım ve servis hizmeti veriyor. Misyonumuz, ekibimiz ve değerlerimiz.",
 };
+
+type TeamRow = {
+  id: string;
+  name: string;
+  title?: string | null;
+  specialty?: string | null;
+  image_url?: string | null;
+};
+
+type StatRow = { label: string; value: string; order_index?: number };
 
 const values = [
   { title: "Dürüstlük", desc: "Yapılmayan iş için ücret alınmaz. Gerçekçi süre ve fiyat verilir.", Icon: ShieldCheck },
@@ -18,11 +29,11 @@ const values = [
   { title: "Sorumluluk", desc: "Her tamir 12 ay yazılı garantilidir. Sözümüz senettir.", Icon: BadgeCheck },
 ];
 
-const team = [
-  { name: "Hasan Canbey", role: "Kurucu & Usta Başı", spec: "Motor & Şanzıman", initials: "HC" },
-  { name: "Murat Demir", role: "Kaporta Şefi", spec: "Kaporta & Boya", initials: "MD" },
-  { name: "Selçuk Yıldız", role: "Elektrik Uzmanı", spec: "Beyin & ECU", initials: "SY" },
-  { name: "İbrahim Kara", role: "Lastik & Süspansiyon", spec: "Rot, balans, amortisör", initials: "İK" },
+const defaultTeam: TeamRow[] = [
+  { id: "1", name: "Hasan Canbey", title: "Kurucu & Usta Başı", specialty: "Motor & Şanzıman" },
+  { id: "2", name: "Murat Demir", title: "Kaporta Şefi", specialty: "Kaporta & Boya" },
+  { id: "3", name: "Selçuk Yıldız", title: "Elektrik Uzmanı", specialty: "Beyin & ECU" },
+  { id: "4", name: "İbrahim Kara", title: "Lastik & Süspansiyon", specialty: "Rot, balans, amortisör" },
 ];
 
 const brands = ["BOSCH", "MOTUL", "VALEO", "BREMBO", "MANN", "CASTROL", "DENSO", "BRC"];
@@ -35,19 +46,34 @@ const milestones = [
   { year: "2024", title: "Bugün", desc: "2.500 m² alan, 50+ teknisyen, 15.000+ mutlu müşteri." },
 ];
 
-export default function HakkimizdaPage() {
+function initials(name: string): string {
+  return name.trim().split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("");
+}
+
+export default async function HakkimizdaPage() {
+  const [content, team, stats] = await Promise.all([
+    loadPage("hakkimizda"),
+    loadList<TeamRow>("team_members", { activeOnly: true, orderBy: "order_index", ascending: true }),
+    loadList<StatRow>("stats", { orderBy: "order_index", ascending: true }),
+  ]);
+
+  const title = content.title || "HAKKIMIZDA";
+  const subtitle = content.subtitle || "İstanbul'da bir mahalle tamirhanesi olarak başladığımız yolculuk, bugün 50 kişilik uzman ekibe ulaştı.";
+  const story = content.story || "";
+  const mission = content.mission || "Her müşterimize, kendi aracımız gibi yaklaşmak. Şeffaf süreç, dürüst fiyat, garantili işçilik ve uzun ömürlü çözümlerle aracınızın yol ömrünü maksimuma çıkarmak.";
+  const vision = content.vision || "Bağımsız oto servis denildiğinde Türkiye'nin ilk akla gelen, kalite ve dürüstlüğüyle marka olmuş referans noktası olmak.";
+
+  const teamList: TeamRow[] = team.length > 0 ? team : defaultTeam;
+
   return (
     <>
       <section className="bg-[#F7F7F9] pt-32 pb-16 lg:pt-40 lg:pb-20 border-b border-[#E8E8EC]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="tag mb-4 inline-flex"><span>1998&apos;den Beri Yoldayız</span></div>
           <h1 className="headline font-display text-5xl sm:text-6xl lg:text-7xl text-[#14141A] mb-4">
-            HAKKIMIZDA
+            {title}
           </h1>
-          <p className="text-[#5A5A66] max-w-2xl text-base sm:text-lg">
-            İstanbul&apos;da bir mahalle tamirhanesi olarak başladığımız yolculuk,
-            bugün 50 kişilik uzman ekibe ulaştı.
-          </p>
+          <p className="text-[#5A5A66] max-w-2xl text-base sm:text-lg">{subtitle}</p>
         </div>
       </section>
 
@@ -71,23 +97,24 @@ export default function HakkimizdaPage() {
             <h2 className="headline font-display text-4xl sm:text-5xl text-[#14141A] mb-6">
               ÜÇ NESİL <br /><span className="text-[#E63946]">USTA İŞÇİLİĞİ</span>
             </h2>
-            <div className="space-y-4 text-[#5A5A66] leading-relaxed">
-              <p>
-                <strong className="text-[#14141A]">Canbey Oto Tamir</strong>, 1998 yılında Hasan Canbey tarafından
-                İstanbul Bağcılar&apos;da 60 m² küçük bir tamirhane olarak kuruldu. O günden bu yana
-                değişmeyen tek bir prensibimiz oldu: <em className="text-[#E63946] not-italic font-semibold">yapılmayan iş için para alınmaz, yapılan iş garantilidir.</em>
-              </p>
-              <p>
-                Bugün <strong className="text-[#14141A]">2.500 m² kapalı alanda</strong>, 8 ayrı uzmanlık atölyesi, 50&apos;den fazla
-                sertifikalı teknisyen ve son nesil teşhis ekipmanları ile İstanbul&apos;un en güvenilir bağımsız
-                oto servislerinden biri olmanın gururunu yaşıyoruz.
-              </p>
-              <p>
-                İkinci nesil olarak işin başına geçen oğullar, dijital çağın gerekliliklerini
-                ata mesleğin disipliniyle birleştirdi. Online randevu, dijital arıza raporu, fotoğraflı süreç takibi —
-                ama temelde aynı yaklaşım: <strong className="text-[#14141A]">aracın sahibi bir misafirdir, aracı emanet bir mülk.</strong>
-              </p>
-            </div>
+            {story ? (
+              <div className="space-y-4 text-[#5A5A66] leading-relaxed whitespace-pre-line">
+                {story}
+              </div>
+            ) : (
+              <div className="space-y-4 text-[#5A5A66] leading-relaxed">
+                <p>
+                  <strong className="text-[#14141A]">Canbey Oto Tamir</strong>, 1998 yılında Hasan Canbey tarafından
+                  İstanbul Bağcılar&apos;da 60 m² küçük bir tamirhane olarak kuruldu. O günden bu yana
+                  değişmeyen tek bir prensibimiz oldu: <em className="text-[#E63946] not-italic font-semibold">yapılmayan iş için para alınmaz, yapılan iş garantilidir.</em>
+                </p>
+                <p>
+                  Bugün <strong className="text-[#14141A]">2.500 m² kapalı alanda</strong>, 8 ayrı uzmanlık atölyesi, 50&apos;den fazla
+                  sertifikalı teknisyen ve son nesil teşhis ekipmanları ile İstanbul&apos;un en güvenilir bağımsız
+                  oto servislerinden biri olmanın gururunu yaşıyoruz.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="lg:col-span-5">
@@ -113,7 +140,7 @@ export default function HakkimizdaPage() {
         </div>
       </section>
 
-      <Stats />
+      <Stats items={stats.length > 0 ? stats : undefined} />
 
       {/* Mission / Vision / Values */}
       <section className="py-20 lg:py-24 bg-[#F7F7F9]">
@@ -122,19 +149,13 @@ export default function HakkimizdaPage() {
             <div className="card p-7 lg:p-8 border-l-4 border-l-[#E63946]">
               <div className="tag mb-3 inline-flex"><Target size={11} /><span>Misyonumuz</span></div>
               <h3 className="font-display text-2xl text-[#14141A] mb-3 tracking-wider">DOĞRU İŞ, DOĞRU FİYAT</h3>
-              <p className="text-[#5A5A66] leading-relaxed">
-                Her müşterimize, kendi aracımız gibi yaklaşmak. Şeffaf süreç, dürüst fiyat, garantili işçilik
-                ve uzun ömürlü çözümlerle aracınızın yol ömrünü maksimuma çıkarmak.
-              </p>
+              <p className="text-[#5A5A66] leading-relaxed whitespace-pre-line">{mission}</p>
             </div>
 
             <div className="card p-7 lg:p-8 border-l-4 border-l-[#F4A400]">
               <div className="tag tag-gold mb-3 inline-flex"><Lightbulb size={11} /><span>Vizyonumuz</span></div>
               <h3 className="font-display text-2xl text-[#14141A] mb-3 tracking-wider">TÜRKİYE&apos;NİN ADI</h3>
-              <p className="text-[#5A5A66] leading-relaxed">
-                Bağımsız oto servis denildiğinde Türkiye&apos;nin ilk akla gelen, kalite ve dürüstlüğüyle marka olmuş
-                referans noktası olmak. Elektrikli araç dönüşümüne öncülük etmek.
-              </p>
+              <p className="text-[#5A5A66] leading-relaxed whitespace-pre-line">{vision}</p>
             </div>
           </div>
 
@@ -170,17 +191,30 @@ export default function HakkimizdaPage() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-            {team.map((m) => (
-              <div key={m.name} className="card card-hover overflow-hidden">
-                <div className="relative aspect-square bg-[#F7F7F9] flex items-center justify-center border-b border-[#E8E8EC]">
-                  <div className="font-display text-7xl text-[#E8E8EC]">{m.initials}</div>
+            {teamList.map((m) => (
+              <div key={m.id} className="card card-hover overflow-hidden">
+                <div className="relative aspect-square bg-[#F7F7F9] flex items-center justify-center border-b border-[#E8E8EC] overflow-hidden">
+                  {m.image_url ? (
+                    <Image
+                      src={m.image_url}
+                      alt={m.name}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      className="object-cover"
+                      unoptimized={m.image_url.startsWith("http")}
+                    />
+                  ) : (
+                    <div className="font-display text-7xl text-[#E8E8EC]">{initials(m.name)}</div>
+                  )}
                 </div>
                 <div className="p-5">
                   <h3 className="font-display text-lg tracking-wider text-[#14141A]">{m.name}</h3>
-                  <div className="text-[11px] text-[#E63946] font-semibold tracking-wider uppercase font-cond mt-0.5">{m.role}</div>
-                  <div className="text-xs text-[#5A5A66] mt-2 pt-2 border-t border-[#E8E8EC]">
-                    Uzmanlık: <span className="text-[#14141A]">{m.spec}</span>
-                  </div>
+                  <div className="text-[11px] text-[#E63946] font-semibold tracking-wider uppercase font-cond mt-0.5">{m.title}</div>
+                  {m.specialty && (
+                    <div className="text-xs text-[#5A5A66] mt-2 pt-2 border-t border-[#E8E8EC]">
+                      Uzmanlık: <span className="text-[#14141A]">{m.specialty}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Bebas_Neue, Barlow_Condensed } from "next/font/google";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
-import PromoPopup from "@/components/PromoPopup";
+import SiteChrome from "@/components/SiteChrome";
+import { supabase } from "@/lib/supabase";
 import "./globals.css";
 
 const inter = Inter({
@@ -55,11 +53,44 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+type Row = { key: string; value: string | null };
+
+async function loadIntegrations() {
+  // Env yoksa Supabase çağırma — sessizce boş döndür
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    return { ga4Id: "", gtmId: "", gscVerification: "", gadsId: "" };
+  }
+
+  try {
+    const { data } = await supabase
+      .from("site_settings")
+      .select("key, value")
+      .in("key", ["ga4_id", "gtm_id", "gsc_verification", "gads_id"]);
+
+    const rows: Row[] = data ?? [];
+    const get = (k: string) => rows.find((r) => r.key === k)?.value || "";
+
+    return {
+      ga4Id: get("ga4_id"),
+      gtmId: get("gtm_id"),
+      gscVerification: get("gsc_verification"),
+      gadsId: get("gads_id"),
+    };
+  } catch {
+    return { ga4Id: "", gtmId: "", gscVerification: "", gadsId: "" };
+  }
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { ga4Id, gtmId, gscVerification, gadsId } = await loadIntegrations();
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "AutoRepair",
@@ -113,17 +144,65 @@ export default function RootLayout({
       className={`${inter.variable} ${bebas.variable} ${barlowCondensed.variable} h-full antialiased`}
     >
       <head>
+        {gscVerification && (
+          <meta name="google-site-verification" content={gscVerification} />
+        )}
+
+        {/* GTM head */}
+        {gtmId && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`,
+            }}
+          />
+        )}
+
+        {/* GA4 (yalnızca GTM yoksa — GTM içinden de yönetilebilir) */}
+        {ga4Id && !gtmId && (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${ga4Id}');`,
+              }}
+            />
+          </>
+        )}
+
+        {/* Google Ads */}
+        {gadsId && (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${gadsId}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${gadsId}');`,
+              }}
+            />
+          </>
+        )}
+
+        {/* JSON-LD */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
       <body className="min-h-full flex flex-col bg-white text-[#14141A]">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <WhatsAppButton />
-        <PromoPopup />
+        {/* GTM noscript */}
+        {gtmId && (
+          <noscript
+            dangerouslySetInnerHTML={{
+              __html: `<iframe src="https://www.googletagmanager.com/ns.html?id=${gtmId}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
+            }}
+          />
+        )}
+        <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
   );
